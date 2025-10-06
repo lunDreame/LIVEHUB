@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => ({
       allow: [".."],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**"],
     },
+    historyApiFallback: true,
   },
   build: {
     outDir: "dist/spa",
