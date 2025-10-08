@@ -1,11 +1,17 @@
 {
-    "routes": [
+    "builds": [
         {
-            "handle": "filesystem"
-        },
+            "src": "index.html",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist/spa"
+            }
+        }
+    ],
+    "rewrites": [
         {
-            "src": "/.*",
-            "dest": "/index.html"
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }
