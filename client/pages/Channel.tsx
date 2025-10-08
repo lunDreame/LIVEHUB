@@ -116,13 +116,43 @@ export default function ChannelPage() {
         return;
       }
 
-      const finalUrl = await resolveCandidate(candidate);
+      // UDP 멀티캐스트 URL인 경우 서버의 HLS 변환 API 사용
+      let finalUrl = candidate;
+      if (candidate.startsWith('udp://')) {
+        try {
+          console.log(`UDP 스트림 감지: ${candidate}, 서버에서 HLS로 변환 중...`);
+          const proxyResponse = await fetch(`/api/proxy?udp=${encodeURIComponent(candidate)}&slug=${encodeURIComponent(channel.slug)}`);
+
+          if (!proxyResponse.ok) {
+            throw new Error(`HLS 변환 실패: ${proxyResponse.statusText}`);
+          }
+
+          const proxyData = await proxyResponse.json();
+          if (!proxyData.hlsUrl) {
+            throw new Error('서버에서 HLS URL을 반환하지 않았습니다.');
+          }
+
+          finalUrl = proxyData.hlsUrl;
+          console.log(`HLS URL 받음: ${finalUrl}`);
+        } catch (err: any) {
+          console.error('UDP → HLS 변환 오류:', err);
+          if (!mounted) return;
+          setError(`스트림 변환 실패: ${err.message}`);
+          setLoading(false);
+          return;
+        }
+      } else {
+        finalUrl = await resolveCandidate(candidate);
+      }
       if (!mounted) return;
       setResolvedUrl(finalUrl);
 
       try {
         if (Hls.isSupported()) {
-          hls = new Hls({ enableWorker: true });
+          hls = new Hls({
+            enableWorker: true,
+            backBufferLength: 90,
+          });
           hls.loadSource(finalUrl);
           hls.attachMedia(media as HTMLMediaElement);
 
@@ -147,32 +177,8 @@ export default function ChannelPage() {
             console.warn("failed to attach media events", e);
           }
 
-          // Prefer levels that contain video (resolution > 0). If audio-only selected, keep default behavior.
-          hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data: any) {
-            try {
-              const levels = data?.levels || [];
-              // choose highest bandwidth level that has width/height > 0
-              let chosen = -1;
-              for (let i = 0; i < levels.length; i++) {
-                const lvl = levels[i];
-                if (lvl && (lvl.width || lvl.height)) {
-                  if (chosen === -1 || (lvl.bitrate || lvl.bitrate) > (levels[chosen].bitrate || levels[chosen].bitrate)) {
-                    chosen = i;
-                  }
-                }
-              }
-              if (chosen >= 0) {
-                console.info('Manifest parsed: forcing level', chosen, levels[chosen]);
-                hls.startLevel = chosen;
-                hls.nextLevel = chosen;
-                // restart load to apply
-                try { hls.startLoad(); } catch (e) { }
-              } else {
-                console.info('Manifest parsed: no video levels detected, keeping default');
-              }
-            } catch (e) {
-              console.warn('Error in MANIFEST_PARSED handler', e);
-            }
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            // Just play when ready
           });
 
           hls.on(Hls.Events.ERROR, async function (event, data) {
@@ -312,7 +318,8 @@ export default function ChannelPage() {
                   break;
               }
             } else {
-              setError(`플레이어 경고: ${type} / ${details}`);
+              // non-fatal 에러는 콘솔에만 기록하고 UI에는 표시하지 않음
+              console.warn(`플레이어 경고 (non-fatal): ${type} / ${details}`);
             }
           });
         } else if (media.canPlayType("application/vnd.apple.mpegurl")) {
