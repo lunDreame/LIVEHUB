@@ -10,25 +10,28 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SiteHeader from "@/components/layout/SiteHeader";
 import ChannelPage from "@/pages/Channel";
+import { PlayerProvider } from "./context/player";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="min-h-screen bg-background text-foreground">
-          <SiteHeader />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/channel/:slug" element={<ChannelPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
+      <PlayerProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen bg-background text-foreground">
+            <SiteHeader />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/channel/:slug" element={<ChannelPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </PlayerProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

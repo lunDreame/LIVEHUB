@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { categories, channels } from "@/lib/data/channels";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,16 @@ import ChannelCard from "@/components/ChannelCard";
 import { Search } from "lucide-react";
 
 export default function Index() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initial = (searchParams.get("cat") as any) || categories[0].id;
+
   const [query, setQuery] = useState("");
-  const [active, setActive] = useState(categories[0].id);
+  const [active, setActive] = useState(initial);
+
+  useEffect(() => {
+    // keep URL in sync so browser back/forward restores selected tab
+    setSearchParams({ cat: active });
+  }, [active, setSearchParams]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -66,13 +75,40 @@ export default function Index() {
 
           {categories.map((c) => (
             <TabsContent key={c.id} value={c.id} className="mt-6">
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {filtered
-                  .filter((ch) => ch.category === c.id)
-                  .map((ch) => (
-                    <ChannelCard key={ch.slug} channel={ch} />
-                  ))}
-              </div>
+              {c.id === "radio" ? (
+                // grouped radio listing
+                (() => {
+                  const radios = filtered.filter((ch) => ch.category === "radio");
+                  const groups: Record<string, any[]> = {};
+                  for (const r of radios) {
+                    const g = r.group || "기타";
+                    if (!groups[g]) groups[g] = [];
+                    groups[g].push(r);
+                  }
+                  return (
+                    <div className="flex flex-col gap-6">
+                      {Object.keys(groups).map((g) => (
+                        <div key={g}>
+                          <h3 className="mb-3 text-lg font-semibold">{g}</h3>
+                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {groups[g].map((ch) => (
+                              <ChannelCard key={`${ch.slug}-${encodeURIComponent(ch.name)}`} channel={ch} currentCategory={c.id} />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {filtered
+                    .filter((ch) => ch.category === c.id)
+                    .map((ch) => (
+                      <ChannelCard key={`${ch.slug}-${encodeURIComponent(ch.name)}`} channel={ch} currentCategory={c.id} />
+                    ))}
+                </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>

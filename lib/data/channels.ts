@@ -2,11 +2,10 @@ export type CategoryId =
   | "terrestrial"
   | "sports"
   | "homeShopping"
-  | "international"
   | "education"
-  | "public"
   | "entertainment"
-  | "economy";
+  | "economy"
+  | "radio";
 
 export interface Channel {
   name: string;
@@ -14,192 +13,121 @@ export interface Channel {
   category: CategoryId;
   tags?: string[];
   streamUrl?: string; // optional embed url when available
+  group?: string; // for radio subgrouping (e.g., KBS, MBC)
 }
 
 export const categories: { id: CategoryId; label: string }[] = [
   { id: "terrestrial", label: "지상파 / 종편" },
   { id: "sports", label: "스포츠 채널" },
   { id: "homeShopping", label: "홈쇼핑" },
-  { id: "international", label: "해외 뉴스 / 교양" },
   { id: "education", label: "교육 / 어린이 (EBS)" },
-  { id: "public", label: "종교 / 공공방송" },
   { id: "entertainment", label: "음악 / 엔터테인먼트" },
   { id: "economy", label: "국내 경제/뉴스 전문" },
+  { id: "radio", label: "라디오" },
 ];
 
 const s = (text: string) =>
   text
     .toLowerCase()
     .replace(/&/g, "-and-")
-    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/[^a-z0-9\uAC00-\uD7A3]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
 export const channels: Channel[] = [
-  // 지상파 / 종편 (KBS)
-  "KBS1",
-  "KBS2",
-  "KBS NEWS 24",
-  "KBS DRAMA",
-  "KBS JOY",
-  "KBS STORY",
-  "KBS LIFE",
-  "KBS KIDS",
-  "KBS WORLD TV",
-  "KBS LIVE Dokdo",
-  // MBC 계열
-  "MBC",
-  "대구MBC",
-  "대전MBC",
-  "CJB",
-  // SBS 계열
-  "SBS",
-  "SBS 뉴스",
-  "SBS Sports",
-  "SBS GOLF",
-  "SBS GOLF2",
-  // JTBC 계열
-  "JTBC",
-  "JTBC 뉴스",
-  "JTBC GOLF",
-  "JTBC 골프&스포츠",
-  // 종편
-  "채널A",
-  "TV조선",
-  "MBN",
-  // 뉴스전문
-  "연합뉴스TV",
-  "연합뉴스경제TV",
-  "서울경제TV",
-].map((name): Channel => ({ name, slug: s(name), category: "terrestrial" }))
-  .concat(
-    // 스포츠 채널
-    [
-      "프로야구 1경기",
-      "프로야구 2경기",
-      "프로야구 3경기",
-      "프로야구 4경기",
-      "프로야구 5경기",
-      "네이버 농구",
-      "네이버 배구",
-      "네이버 골프",
-      "네이버 야구",
-      "네이버 축구",
-      "다음 농구",
-      "다음 배구",
-      "다음 골프",
-      "다음 야구",
-      "다음 축구",
-      "Billiard TV",
-      "Outside TV",
-      "Fun Roads TV",
-      "Red Bull TV",
-      "The Pet Collective",
-    ].map((name): Channel => ({ name, slug: s(name), category: "sports" }))
-  )
-  .concat(
-    // 홈쇼핑
-    [
-      "GS샵",
-      "GS마이샵",
-      "현대홈쇼핑",
-      "현대홈쇼핑+샵",
-      "NS홈쇼핑",
-      "CJ온스타일",
-      "CJ온스타일+롯데홈쇼핑",
-      "롯데OneTV",
-      "W쇼핑",
-      "신세계쇼핑",
-      "쇼핑엔티",
-      "공영쇼핑",
-      "SK스토아",
-      "KT알파 쇼핑",
-      "홈앤쇼핑",
-    ].map((name): Channel => ({ name, slug: s(name), category: "homeShopping" }))
-  )
-  .concat(
-    // 해외 뉴스 / 교양
-    [
-      "France 24",
-      "Bloomberg",
-      "CBSN",
-      "NTV News 24",
-      "CGN Japan",
-      "Shibuya Crossing",
-      "TBS NEWS DIG",
-      "NHK WORLD",
-      "ANN",
-      "NBN",
-      "HTB",
-      "Shop Channel",
-      "QVC",
-      "Sky News",
-      "Kronheit TV",
-      "Classic Arts Showcase",
-      "Vevo Rock",
-      "Kpop TV Play",
-    ].map((name): Channel => ({ name, slug: s(name), category: "international" }))
-  )
-  .concat(
-    // 교육 / 어린이 (EBS)
-    [
-      "EBS1",
-      "EBS2",
-      "EBS KIDS",
-      "EBS 플러스1",
-      "EBS 플러스2",
-      "EBS English",
-      "YTN 사이언스",
-      "KOCW",
-      "EBS MATH",
-    ].map((name): Channel => ({ name, slug: s(name), category: "education" }))
-  )
-  .concat(
-    // 종교 / 공공방송
-    [
-      "CBS",
-      "CTS기독교TV",
-      "CGN",
-      "C채널",
-      "GOODTV",
-      "가톨릭평화방송",
-      "BBS불교방송",
-      "BTN 불교TV",
-      "원음방송",
-      "OBS",
-      "Btv 인천",
-      "서경방송",
-      "KTV",
-      "국회방송",
-      "KFN",
-      "Arirang TV",
-      "한국농업방송",
-    ].map((name): Channel => ({ name, slug: s(name), category: "public" }))
-  )
-  .concat(
-    // 음악 / 엔터테인먼트
-    [
-      "K-ASM",
-      "TED",
-      "FashionTV",
-      "Wonder",
-      "Cheddar",
-      "CNA",
-      "G.I. JOE",
-      "Vevo Rock",
-      "Tv Groovy",
-      "9XM",
-      "NBC News TV",
-      "ABC News",
-    ].map((name): Channel => ({ name, slug: s(name), category: "entertainment" }))
-  )
-  .concat(
-    // 국내 경제/뉴스 전문
-    [
-      "한국경제TV",
-      "이데일리TV",
-      "매일경제TV",
-      "머니투데이방송",
-      "토마토TV",
-    ].map((name): Channel => ({ name, slug: s(name), category: "economy" }))
-  );
+  // 지상파 / 종편
+  { name: "KBS1", slug: s("KBS1"), category: "terrestrial" },
+  { name: "KBS2", slug: s("KBS2"), category: "terrestrial" },
+  { name: "KBS NEWS 24", slug: s("KBS NEWS 24"), category: "terrestrial" },
+  { name: "KBS DRAMA", slug: s("KBS DRAMA"), category: "terrestrial" },
+  { name: "KBS JOY", slug: s("KBS JOY"), category: "terrestrial" },
+  { name: "KBS STORY", slug: s("KBS STORY"), category: "terrestrial" },
+  { name: "KBS LIFE", slug: s("KBS LIFE"), category: "terrestrial" },
+  { name: "KBS KIDS", slug: s("KBS KIDS"), category: "terrestrial" },
+  { name: "KBS WORLD TV", slug: s("KBS WORLD TV"), category: "terrestrial" },
+
+  { name: "MBC", slug: s("MBC"), category: "terrestrial" },
+
+  { name: "SBS", slug: s("SBS"), category: "terrestrial" },
+  { name: "SBS 뉴스", slug: s("SBS 뉴스"), category: "terrestrial" },
+  { name: "SBS Sports", slug: s("SBS Sports"), category: "terrestrial" },
+  { name: "SBS GOLF", slug: s("SBS GOLF"), category: "terrestrial" },
+
+  { name: "JTBC 뉴스룸", slug: s("JTBC 뉴스룸"), category: "terrestrial" },
+  { name: "JTBC GOLF", slug: s("JTBC GOLF"), category: "terrestrial" },
+
+  { name: "채널A", slug: s("채널A"), category: "terrestrial" },
+  { name: "TV조선", slug: s("TV조선"), category: "terrestrial" },
+  { name: "MBN", slug: s("MBN"), category: "terrestrial" },
+
+  // 종합편성채널
+  { name: "tvN", slug: s("tvN"), category: "terrestrial" },
+  { name: "ENA", slug: s("ENA"), category: "terrestrial" },
+  { name: "YTN", slug: s("YTN"), category: "terrestrial" },
+  { name: "TV Chosun", slug: s("TV Chosun"), category: "terrestrial" },
+  { name: "Channel A", slug: s("Channel A"), category: "terrestrial" },
+
+  // 스포츠 채널
+  { name: "SPOTV", slug: s("SPOTV"), category: "sports" },
+  { name: "SPOTV2", slug: s("SPOTV2"), category: "sports" },
+  { name: "KBS N Sports", slug: s("KBS N Sports"), category: "sports" },
+  { name: "MBC Sports+", slug: s("MBC Sports+"), category: "sports" },
+  { name: "SBS Sports", slug: s("SBS Sports"), category: "sports" },
+  { name: "tvN Sports", slug: s("tvN Sports"), category: "sports" },
+  { name: "JTBC Golf", slug: s("JTBC Golf"), category: "sports" },
+  { name: "SBS Golf", slug: s("SBS Golf"), category: "sports" },
+
+  // 홈쇼핑
+  { name: "GS샵", slug: s("GS샵"), category: "homeShopping" },
+  { name: "GS마이샵", slug: s("GS마이샵"), category: "homeShopping" },
+  { name: "현대홈쇼핑", slug: s("현대홈쇼핑"), category: "homeShopping" },
+  { name: "현대홈쇼핑+샵", slug: s("현대홈쇼핑+샵"), category: "homeShopping" },
+  { name: "NS홈쇼핑", slug: s("NS홈쇼핑"), category: "homeShopping" },
+  { name: "CJ온스타일", slug: s("CJ온스타일"), category: "homeShopping" },
+  { name: "CJ온스타일+", slug: s("CJ온스타일+"), category: "homeShopping" },
+  { name: "롯데홈쇼핑", slug: s("롯데홈쇼핑"), category: "homeShopping" },
+
+  // 교육 / 어린이 (EBS 등)
+  { name: "EBS1", slug: s("EBS1"), category: "education" },
+  { name: "EBS2", slug: s("EBS2"), category: "education" },
+  { name: "EBS KIDS", slug: s("EBS KIDS"), category: "education" },
+  { name: "EBS 플러스1", slug: s("EBS 플러스1"), category: "education" },
+  { name: "EBS 플러스2", slug: s("EBS 플러스2"), category: "education" },
+  { name: "EBS English", slug: s("EBS English"), category: "education" },
+  { name: "YTN 사이언스", slug: s("YTN 사이언스"), category: "education" },
+  { name: "KOCW", slug: s("KOCW"), category: "education" },
+  { name: "EBS MATH", slug: s("EBS MATH"), category: "education" },
+
+  // 음악 / 엔터테인먼트
+  { name: "OCN", slug: s("OCN"), category: "entertainment" },
+  { name: "OCN Movies", slug: s("OCN Movies"), category: "entertainment" },
+  { name: "MBC ON", slug: s("MBC ON"), category: "entertainment" },
+  { name: "tvN Drama", slug: s("tvN Drama"), category: "entertainment" },
+  { name: "tvN Show", slug: s("tvN Show"), category: "entertainment" },
+  { name: "Mnet", slug: s("Mnet"), category: "entertainment" },
+  { name: "SBS Plus", slug: s("SBS Plus"), category: "entertainment" },
+
+  // 국내 경제/뉴스 전문
+  { name: "한국경제TV", slug: s("한국경제TV"), category: "economy" },
+  { name: "이데일리TV", slug: s("이데일리TV"), category: "economy" },
+  { name: "매일경제TV", slug: s("매일경제TV"), category: "economy" },
+  { name: "머니투데이방송", slug: s("머니투데이방송"), category: "economy" },
+
+  // 라디오 채널 (그룹)
+  { name: "KBS 1FM", slug: s("KBS 1FM"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS 2FM", slug: s("KBS 2FM"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS 3라디오", slug: s("KBS 3라디오"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS 1라디오", slug: s("KBS 1라디오"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS 2라디오", slug: s("KBS 2라디오"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS 한민족방송", slug: s("KBS 한민족방송"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS WORLD Radio (한국어 Ch 1)", slug: s("KBS WORLD Radio (한국어 Ch 1)"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS WORLD Radio (한국어 Ch 2)", slug: s("KBS WORLD Radio (한국어 Ch 2)"), category: "radio", group: "KBS 라디오" },
+  { name: "KBS WORLD Radio (Music)", slug: s("KBS WORLD Radio (Music)"), category: "radio", group: "KBS 라디오" },
+
+  { name: "MBC 표준FM", slug: s("MBC 표준FM"), category: "radio", group: "MBC 라디오" },
+  { name: "MBC FM4U", slug: s("MBC FM4U"), category: "radio", group: "MBC 라디오" },
+
+  { name: "SBS 파워FM", slug: s("SBS 파워FM"), category: "radio", group: "SBS 라디오" },
+  { name: "SBS 러브FM", slug: s("SBS 러브FM"), category: "radio", group: "SBS 라디오" },
+  { name: "SBS 라디오M", slug: s("SBS 라디오M"), category: "radio", group: "SBS 라디오" },
+];

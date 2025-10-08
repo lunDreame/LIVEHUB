@@ -2,12 +2,11 @@ const s = (text: string) =>
   text
     .toLowerCase()
     .replace(/&/g, "-and-")
-    .replace(/[^a-z0-9가-힣]+/g, "-")
+    .replace(/[^a-z0-9\uAC00-\uD7A3]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
 export const streamMap: Record<string, string> = {
-  // KBS
   [s("KBS1")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/11",
   [s("KBS2")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/12",
   [s("KBS NEWS 24")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/81",
@@ -17,12 +16,36 @@ export const streamMap: Record<string, string> = {
   [s("KBS LIFE")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N93",
   [s("KBS KIDS")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N96",
   [s("KBS WORLD TV")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/14",
-  [s("KBS LIVE Dokdo")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/cctv01",
 
-  // MBC local m3u8s - 마스터 플레이리스트
-  [s("대구MBC")]: "https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8",
-  [s("대전MBC")]: "https://ns1.tjmbc.co.kr/live/myStream.sdp/playlist.m3u8",
-  [s("CJB")]: "https://tistory1.daumcdn.net/tistory/2864460/skin/images/Public_8_5706648C.m3u8",
+  [s("MBC")]: "http://www.hwado.net/webtv/catv/503_CFEA7803.php",
+
+  [s("SBS")]: "http://www.hwado.net/webtv/catv/502_76142D8F.php",
+  [s("SBS 뉴스")]: "https://www.youtube.com/embed/RevYuGM_Bx0?autoplay=1",
+  [s("SBS Sports")]: "http://webtv.dothome.co.kr/ch/catv/35.php",
+  [s("SBS GOLF")]: "",
+
+  [s("JTBC 뉴스룸")]: "https://tistory1.daumcdn.net/tistory/2864460/skin/images/CATV_51_5D021B6D.m3u8",
+  [s("JTBC GOLF")]: "https://www.youtube.com/embed/y0Fa_lEljWQ?autoplay=1",
+
+  [s("채널 A")]: "https://tistory1.daumcdn.net/tistory/2864460/skin/images/CATV_52_12C896BD.m3u8",
+  [s("TV조선")]: "https://tistory1.daumcdn.net/tistory/2864460/skin/images/CATV_53_8022E63C.m3u8",
+  [s("MBN")]: "https://www.mbn.co.kr/player/mbnStreamAuth_new_live.mbn?vod_url=https://hls-live.mbn.co.kr/mbn-on-air/600k/playlist.m3u8",
+
+  [s("tvN")]: "",
+  [s("ENA")]: "",
+  [s("YTN")]: "https://www.youtube.com/embed/FJfwehhzIhw?autoplay=1",
+  [s("TV Chosun")]: "",
+  [s("Channel A")]: "",
+
+  [s("SPOTV")]: "",
+  [s("SPOTV2")]: "",
+  [s("KBS N Sports")]: "",
+  [s("MBC Sports+")]: "",
+  [s("SBS Sports")]: "",
+  [s("tvN Sports")]: "",
+  [s("JTBC Golf")]: "",
+  [s("SBS Golf")]: "",
+
 };
 
 export function resolveStreamFor(slug: string) {

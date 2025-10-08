@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { channels } from "@/lib/data/channels";
 import { resolveStreamFor } from "@/lib/streams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Hls from "hls.js";
+import { usePlayer } from "@/context/player";
 
 function findM3u8InJson(obj: any): string | null {
   if (!obj) return null;
@@ -31,10 +32,22 @@ function findM3u8InJson(obj: any): string | null {
 export default function ChannelPage() {
   const { slug } = useParams<{ slug: string }>();
   const channel = channels.find((c) => c.slug === slug);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaRef = useRef<HTMLMediaElement | null>(null);
+  const location = useLocation();
+  const fromCategory = (location.state as any)?.fromCategory as string | undefined;
+  const homeTo = fromCategory ? `/?cat=${fromCategory}` : "/";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [showUrl, setShowUrl] = useState(false);
+  const [isYouTube, setIsYouTube] = useState(false);
+  const player = usePlayer();
+
+  // YouTube URL 감지 함수
+  function isYouTubeUrl(url: string): boolean {
+    if (!url) return false;
+    return url.includes("youtube.com/embed") || url.includes("youtu.be");
+  }
 
   useEffect(() => {
     let hls: Hls | null = null;
@@ -61,29 +74,6 @@ export default function ChannelPage() {
         }
 
         const text = await res.text();
-
-        // 마스터 플레이리스트에서 실제 스트림 URL 찾기
-        if (text.includes("#EXT-X-STREAM-INF")) {
-          const lines = text.split(/\r?\n/).map((l) => l.trim());
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith("#EXT-X-STREAM-INF")) {
-              for (let j = i + 1; j < lines.length; j++) {
-                const nextLine = lines[j];
-                if (!nextLine || nextLine.startsWith("#")) continue;
-                try {
-                  // 상대 URL을 절대 URL로 변환
-                  const streamUrl = new URL(nextLine, res.url).toString();
-                  console.log(`마스터 플레이리스트에서 실제 스트림 발견: ${streamUrl}`);
-                  return streamUrl;
-                } catch {
-                  return nextLine;
-                }
-              }
-              break;
-            }
-          }
-        }
-
         const match = text.match(/https?:\/\/[^^\n'\"]+\.m3u8/);
         if (match) return match[0];
 
@@ -99,6 +89,7 @@ export default function ChannelPage() {
       setError(null);
       setLoading(true);
       setResolvedUrl(null);
+      setIsYouTube(false);
 
       const candidate = channel.streamUrl ?? resolveStreamFor(channel.slug);
       if (!candidate) {
@@ -107,8 +98,19 @@ export default function ChannelPage() {
         return;
       }
 
-      const video = videoRef.current;
-      if (!video) {
+      // YouTube URL인 경우 iframe으로 처리
+      if (isYouTubeUrl(candidate)) {
+        if (!mounted) return;
+        setResolvedUrl(candidate);
+        setIsYouTube(true);
+        setLoading(false);
+        // YouTube 재생 시작 시 플레이어 상태 업데이트
+        if (channel) player.play(channel.slug);
+        return;
+      }
+
+      const media = mediaRef.current;
+      if (!media) {
         setLoading(false);
         setError("플레이어를 초기화할 수 없습니다.");
         return;
@@ -122,9 +124,30 @@ export default function ChannelPage() {
         if (Hls.isSupported()) {
           hls = new Hls({ enableWorker: true });
           hls.loadSource(finalUrl);
-          hls.attachMedia(video);
+          hls.attachMedia(media as HTMLMediaElement);
 
-          // Prefer levels that contain video (resolution > 0). If audio-only selected, force a video level.
+          // attach media event listeners to report play/pause to global player state
+          try {
+            const el = media as HTMLMediaElement;
+            const onPlaying = () => { if (channel) player.play(channel.slug); };
+            const onPause = () => { player.pause(); };
+            const onEnded = () => { player.stop(); };
+            el.addEventListener("playing", onPlaying);
+            el.addEventListener("pause", onPause);
+            el.addEventListener("ended", onEnded);
+            // cleanup later
+            const cleanupEvents = () => {
+              try { el.removeEventListener("playing", onPlaying); } catch { }
+              try { el.removeEventListener("pause", onPause); } catch { }
+              try { el.removeEventListener("ended", onEnded); } catch { }
+            };
+            // store cleanup on hls instance for later teardown
+            (hls as any)._cleanupEvents = cleanupEvents;
+          } catch (e) {
+            console.warn("failed to attach media events", e);
+          }
+
+          // Prefer levels that contain video (resolution > 0). If audio-only selected, keep default behavior.
           hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data: any) {
             try {
               const levels = data?.levels || [];
@@ -162,18 +185,18 @@ export default function ChannelPage() {
             const { type, details, fatal, url: errorUrl } = data as any;
             if (fatal) {
               // levelParsingError often means the playlist is non-standard (missing TARGETDURATION).
-              // Try client-side repair to fix the playlist.
+              // First try client-side repair; if that fails, surface an error (no server proxy available).
               if (details === "levelParsingError") {
                 const target = (typeof errorUrl === "string" && errorUrl.endsWith(".m3u8")) ? errorUrl : finalUrl;
 
-                // Attempt in-browser repair of the playlist
+                // Attempt in-browser repair of the playlist. Try each variant if master is present.
                 try {
                   const res = await fetch(target, { method: "GET" });
                   if (!res.ok) throw new Error("플레이리스트를 가져올 수 없습니다.");
                   const txt = await res.text();
 
-                  // If master, find a variant
-                  let variantUrl: string | null = null;
+                  // Collect candidate media playlists: if master, list variants; otherwise use the playlist itself
+                  const candidates: string[] = [];
                   if (txt.includes("#EXT-X-STREAM-INF")) {
                     const lines = txt.split(/\r?\n/).map((l) => l.trim());
                     for (let i = 0; i < lines.length; i++) {
@@ -183,62 +206,82 @@ export default function ChannelPage() {
                           if (!cand) continue;
                           if (!cand.startsWith("#")) {
                             try {
-                              variantUrl = new URL(cand, res.url).toString();
-                              break;
+                              candidates.push(new URL(cand, res.url).toString());
                             } catch {
-                              variantUrl = cand;
-                              break;
+                              candidates.push(cand);
                             }
+                            break;
                           }
                         }
-                        if (variantUrl) break;
                       }
+                    }
+                  } else {
+                    candidates.push(res.url);
+                  }
+
+                  // Try each candidate variant until one can be repaired and loaded
+                  let repairedBlobUrl: string | null = null;
+                  for (const candUrl of candidates) {
+                    try {
+                      const vres = await fetch(candUrl, { method: "GET" });
+                      if (!vres.ok) continue;
+                      let vtext = await vres.text();
+
+                      // If this looks like a master accidentally, skip
+                      if (vtext.includes("#EXT-X-STREAM-INF")) continue;
+
+                      // Ensure EXT-X-TARGETDURATION exists
+                      if (!/EXT-X-TARGETDURATION/i.test(vtext)) {
+                        const matches = [...vtext.matchAll(/#EXTINF:([0-9]+(?:\.[0-9]+)?)/gi)].map((m) => parseFloat(m[1]));
+                        const max = matches.length ? Math.ceil(Math.max(...matches)) : 6;
+                        vtext = vtext.replace(/(#EXTM3U\s*)/i, `$1\n#EXT-X-TARGETDURATION:${max}\n`);
+                      }
+
+                      // Convert relative segment URLs to absolute
+                      const base = vres.url;
+                      const fixed = vtext
+                        .split(/\r?\n/)
+                        .map((line) => {
+                          if (!line || line.startsWith("#")) return line;
+                          try {
+                            if (/^https?:\/\//i.test(line)) return line;
+                            return new URL(line, base).toString();
+                          } catch {
+                            return line;
+                          }
+                        })
+                        .join("\n");
+
+                      const blob = new Blob([fixed], { type: "application/vnd.apple.mpegurl" });
+                      repairedBlobUrl = URL.createObjectURL(blob);
+
+                      // load repaired playlist
+                      hls?.destroy();
+                      hls = new Hls({ enableWorker: true });
+                      hls.loadSource(repairedBlobUrl);
+                      hls.attachMedia(media as HTMLMediaElement);
+
+                      // reflect in UI
+                      setResolvedUrl(repairedBlobUrl);
+                      setError(null);
+
+                      // schedule revoke after a minute
+                      setTimeout(() => URL.revokeObjectURL(repairedBlobUrl as string), 60 * 1000);
+
+                      break;
+                    } catch (err) {
+                      console.warn("variant repair failed", candUrl, err);
+                      continue;
                     }
                   }
 
-                  const playlistToRepairUrl = variantUrl ?? res.url;
-                  const vres = await fetch(playlistToRepairUrl, { method: "GET" });
-                  if (!vres.ok) throw new Error("변형 플레이리스트를 가져올 수 없습니다.");
-                  let vtext = await vres.text();
-
-                  // Ensure EXT-X-TARGETDURATION exists
-                  if (!/EXT-X-TARGETDURATION/i.test(vtext)) {
-                    const matches = [...vtext.matchAll(/#EXTINF:([0-9]+(?:\.[0-9]+)?)/gi)].map((m) => parseFloat(m[1]));
-                    const max = matches.length ? Math.ceil(Math.max(...matches)) : 6;
-                    vtext = vtext.replace(/(#EXTM3U\s*)/i, `$1\n#EXT-X-TARGETDURATION:${max}\n`);
-                  }
-
-                  // Convert relative segment URLs to absolute
-                  const base = vres.url;
-                  const fixed = vtext
-                    .split(/\r?\n/)
-                    .map((line) => {
-                      if (!line || line.startsWith("#")) return line;
-                      try {
-                        if (/^https?:\/\//i.test(line)) return line;
-                        return new URL(line, base).toString();
-                      } catch {
-                        return line;
-                      }
-                    })
-                    .join("\n");
-
-                  // Create blob URL for repaired playlist and load it
-                  const blob = new Blob([fixed], { type: "application/vnd.apple.mpegurl" });
-                  const blobUrl = URL.createObjectURL(blob);
-                  // destroy existing hls and use new blob
-                  hls?.destroy();
-                  hls = new Hls({ enableWorker: true });
-                  hls.loadSource(blobUrl);
-                  hls.attachMedia(video);
-
-                  // revoke blob when unload
-                  setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 1000);
-
-                  return;
+                  if (repairedBlobUrl) return;
                 } catch (e) {
                   console.error("client repair failed", e);
                 }
+
+                // Client repair failed — surface error to user
+                setError("플레이리스트 파싱 문제 — 복구에 실패했습니다.");
               }
 
               switch (data.type) {
@@ -263,8 +306,8 @@ export default function ChannelPage() {
                   try {
                     hls?.destroy();
                   } catch (e) { }
-                  if (video.canPlayType("application/vnd.apple.mpegurl")) {
-                    video.src = finalUrl;
+                  if (media.canPlayType("application/vnd.apple.mpegurl")) {
+                    (media as HTMLMediaElement).src = finalUrl;
                   }
                   break;
               }
@@ -272,8 +315,25 @@ export default function ChannelPage() {
               setError(`플레이어 경고: ${type} / ${details}`);
             }
           });
-        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = finalUrl;
+        } else if (media.canPlayType("application/vnd.apple.mpegurl")) {
+          // native HLS support (attach events for player context)
+          try {
+            const el = media as HTMLMediaElement;
+            const onPlaying = () => { if (channel) player.play(channel.slug); };
+            const onPause = () => { player.pause(); };
+            const onEnded = () => { player.stop(); };
+            el.addEventListener("playing", onPlaying);
+            el.addEventListener("pause", onPause);
+            el.addEventListener("ended", onEnded);
+            (el as any)._playerCleanup = () => {
+              try { el.removeEventListener("playing", onPlaying); } catch { }
+              try { el.removeEventListener("pause", onPause); } catch { }
+              try { el.removeEventListener("ended", onEnded); } catch { }
+            };
+          } catch (e) {
+            console.warn("failed to attach native media events", e);
+          }
+          (media as HTMLMediaElement).src = finalUrl;
         } else {
           setError("이 브라우저는 HLS 재생을 지원하지 않습니다.");
         }
@@ -291,11 +351,16 @@ export default function ChannelPage() {
       mounted = false;
       if (hls) {
         try {
+          // call any stored cleanup events
+          try { (hls as any)._cleanupEvents?.(); } catch { }
           hls.destroy();
         } catch (e) { }
       }
-      const v = videoRef.current;
-      if (v) v.src = "";
+      const v = mediaRef.current;
+      if (v) {
+        try { (v as any)._playerCleanup?.(); } catch { }
+        v.src = "";
+      }
     };
   }, [channel]);
 
@@ -306,7 +371,7 @@ export default function ChannelPage() {
         <p className="text-muted-foreground">주소가 정확한지 확인해 주세요.</p>
         <div className="mt-6">
           <Button asChild>
-            <Link to="/">홈으로 돌아가기</Link>
+            <Link to={homeTo}>홈으로 돌아가기</Link>
           </Button>
         </div>
       </main>
@@ -318,9 +383,16 @@ export default function ChannelPage() {
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">{channel.name}</h1>
-          <p className="mt-1 text-muted-foreground">실시간 채널</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-muted-foreground">{channel.category === "radio" ? "실시간 라디오" : "실시간 채널"}</p>
+            {channel.category === "radio" && player.currentSlug === channel.slug && player.isPlaying && (
+              <span className="rounded-full bg-green-600/10 px-2 py-0.5 text-xs text-green-500">청취 중</span>
+            )}
+          </div>
         </div>
-        <Badge className="bg-red-500 text-white hover:bg-red-500">LIVE</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-red-500 text-white hover:bg-red-500">LIVE</Badge>
+        </div>
       </div>
 
       <div className="aspect-video w-full overflow-hidden rounded-lg border bg-black">
@@ -334,22 +406,44 @@ export default function ChannelPage() {
             <div className="text-center max-w-md">
               <p className="mb-2">{error}</p>
               <Button asChild variant="outline">
-                <Link to="/">다른 채널 보기</Link>
+                <Link to={homeTo}>다른 채널 보기</Link>
               </Button>
             </div>
           </div>
         )}
-        <video
-          ref={videoRef}
-          className="h-full w-full bg-black"
-          controls
-          playsInline
-          autoPlay
-        />
+        {isYouTube && resolvedUrl ? (
+          <iframe
+            src={resolvedUrl}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={channel.name}
+          />
+        ) : channel.category === "radio" ? (
+          <audio
+            ref={mediaRef as any}
+            className="h-full w-full bg-black"
+            controls
+            autoPlay
+          />
+        ) : (
+          <video
+            ref={mediaRef as any}
+            className="h-full w-full bg-black"
+            controls
+            playsInline
+            autoPlay
+          />
+        )}
       </div>
 
       <div className="mt-6 text-sm text-muted-foreground">
-        <p>요청 URL: {resolvedUrl ?? channel.streamUrl ?? resolveStreamFor(channel.slug) ?? "없음"}</p>
+        <div className="flex items-center gap-3">
+          <button className="text-xs underline" onClick={() => setShowUrl((s) => !s)}>{showUrl ? "요청 URL 숨기기" : "요청 URL 표시"}</button>
+        </div>
+        {showUrl && (
+          <p className="mt-2 break-all">{resolvedUrl ?? channel.streamUrl ?? resolveStreamFor(channel.slug) ?? "없음"}</p>
+        )}
       </div>
     </main>
   );
