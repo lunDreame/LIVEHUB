@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { channels } from "@/lib/data/channels";
 import { resolveStreamFor } from "@/lib/streams";
 import { Badge } from "@/components/ui/badge";
@@ -33,9 +33,7 @@ export default function ChannelPage() {
   const { slug } = useParams<{ slug: string }>();
   const channel = channels.find((c) => c.slug === slug);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
-  const location = useLocation();
-  const fromCategory = (location.state as any)?.fromCategory as string | undefined;
-  const homeTo = fromCategory ? `/?cat=${fromCategory}` : "/";
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
@@ -312,7 +310,7 @@ export default function ChannelPage() {
                   break;
               }
             } else {
-              setError(`플레이어 경고: ${type} / ${details}`);
+              //setError(`플레이어 경고: ${type} / ${details}`);
             }
           });
         } else if (media.canPlayType("application/vnd.apple.mpegurl")) {
@@ -370,9 +368,7 @@ export default function ChannelPage() {
         <h1 className="mb-4 text-2xl font-bold">채널을 찾을 수 없어요</h1>
         <p className="text-muted-foreground">주소가 정확한지 확인해 주세요.</p>
         <div className="mt-6">
-          <Button asChild>
-            <Link to={homeTo}>홈으로 돌아가기</Link>
-          </Button>
+          <Button onClick={() => navigate(-1)}>홈으로 돌아가기</Button>
         </div>
       </main>
     );
@@ -405,8 +401,8 @@ export default function ChannelPage() {
           <div className="flex h-full w-full items-center justify-center text-white">
             <div className="text-center max-w-md">
               <p className="mb-2">{error}</p>
-              <Button asChild variant="outline">
-                <Link to={homeTo}>다른 채널 보기</Link>
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                다른 채널 보기
               </Button>
             </div>
           </div>

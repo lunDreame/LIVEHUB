@@ -1,23 +1,45 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { categories, channels } from "@/lib/data/channels";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ChannelCard from "@/components/ChannelCard";
 import { Search } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const initial = (searchParams.get("cat") as any) || categories[0].id;
 
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(initial);
 
+  // URL 쿼리 파라미터에서 열려있는 그룹 정보 가져오기
+  const groupsParam = searchParams.get("groups");
+  const [openGroups, setOpenGroups] = useState<string[]>(
+    groupsParam ? groupsParam.split(",").filter(Boolean) : []
+  );
+
+  // URL 파라미터가 변경되면 openGroups 상태 업데이트
   useEffect(() => {
-    // keep URL in sync so browser back/forward restores selected tab
-    setSearchParams({ cat: active });
-  }, [active, setSearchParams]);
+    const groupsFromUrl = searchParams.get("groups");
+    if (groupsFromUrl) {
+      setOpenGroups(groupsFromUrl.split(",").filter(Boolean));
+    } else {
+      setOpenGroups([]);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    // URL을 업데이트하되, 열려있는 그룹 정보도 포함
+    const params: Record<string, string> = { cat: active };
+    if (openGroups.length > 0) {
+      params.groups = openGroups.join(",");
+    }
+    setSearchParams(params, { replace: true });
+  }, [active, openGroups]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,7 +98,7 @@ export default function Index() {
           {categories.map((c) => (
             <TabsContent key={c.id} value={c.id} className="mt-6">
               {c.id === "radio" ? (
-                // grouped radio listing
+                // Accordion-based radio listing for better UX with many channels
                 (() => {
                   const radios = filtered.filter((ch) => ch.category === "radio");
                   const groups: Record<string, any[]> = {};
@@ -85,19 +107,61 @@ export default function Index() {
                     if (!groups[g]) groups[g] = [];
                     groups[g].push(r);
                   }
+
+                  // 지정된 순서대로 정렬
+                  const groupOrder = [
+                    "KBS 라디오",
+                    "SBS 라디오",
+                    "MBC 라디오",
+                    "TBN 교통방송",
+                    "CBS 기독교방송",
+                    "FEBC 극동방송",
+                    "BBS 불교방송",
+                    "CPBC 가톨릭평화방송",
+                    "WBS 원음방송",
+                    "기타 방송"
+                  ];
+
+                  const groupNames = Object.keys(groups).sort((a, b) => {
+                    const aIndex = groupOrder.indexOf(a);
+                    const bIndex = groupOrder.indexOf(b);
+                    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+                    if (aIndex === -1) return 1;
+                    if (bIndex === -1) return -1;
+                    return aIndex - bIndex;
+                  });
+
                   return (
-                    <div className="flex flex-col gap-6">
-                      {Object.keys(groups).map((g) => (
-                        <div key={g}>
-                          <h3 className="mb-3 text-lg font-semibold">{g}</h3>
-                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                            {groups[g].map((ch) => (
-                              <ChannelCard key={`${ch.slug}-${encodeURIComponent(ch.name)}`} channel={ch} currentCategory={c.id} />
-                            ))}
-                          </div>
-                        </div>
+                    <Accordion
+                      type="multiple"
+                      className="w-full"
+                      value={openGroups}
+                      onValueChange={setOpenGroups}
+                    >
+                      {groupNames.map((g) => (
+                        <AccordionItem key={g} value={g}>
+                          <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                            <div className="flex items-center gap-2">
+                              <span>{g}</span>
+                              <span className="text-sm font-normal text-muted-foreground">
+                                ({groups[g].length}개)
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="grid grid-cols-2 gap-4 pt-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                              {groups[g].map((ch) => (
+                                <ChannelCard
+                                  key={`${ch.slug}-${encodeURIComponent(ch.name)}`}
+                                  channel={ch}
+                                  currentCategory={c.id}
+                                />
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
                       ))}
-                    </div>
+                    </Accordion>
                   );
                 })()
               ) : (

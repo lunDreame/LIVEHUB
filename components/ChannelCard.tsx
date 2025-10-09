@@ -11,7 +11,13 @@ function hueFromString(str: string) {
   return h;
 }
 
-export default function ChannelCard({ channel, currentCategory }: { channel: Channel; currentCategory?: string }) {
+export default function ChannelCard({
+  channel,
+  currentCategory
+}: {
+  channel: Channel;
+  currentCategory?: string;
+}) {
   const hue = hueFromString(channel.name);
   const initials = channel.name
     .replace(/[^A-Za-z0-9가-힣 ]/g, "")
@@ -25,7 +31,10 @@ export default function ChannelCard({ channel, currentCategory }: { channel: Cha
   const isPlaying = player.currentSlug === channel.slug && player.isPlaying;
 
   return (
-    <Link to={`/channel/${channel.slug}`} state={{ fromCategory: currentCategory }} aria-label={`${channel.name} ${channel.category === "radio" ? "청취" : "시청하기"}`}>
+    <Link
+      to={`/channel/${channel.slug}`}
+      aria-label={`${channel.name} ${channel.category === "radio" ? "청취" : "시청하기"}`}
+    >
       <Card className="group relative overflow-hidden transition hover:shadow-lg">
         <div className="aspect-video w-full">
           <div
