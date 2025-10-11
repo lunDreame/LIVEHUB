@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { channels } from "@/lib/data/channels";
 import { resolveStreamFor } from "@/lib/streams";
 import { Badge } from "@/components/ui/badge";
@@ -33,9 +33,7 @@ export default function ChannelPage() {
   const { slug } = useParams<{ slug: string }>();
   const channel = channels.find((c) => c.slug === slug);
   const mediaRef = useRef<HTMLMediaElement | null>(null);
-  const location = useLocation();
-  const fromCategory = (location.state as any)?.fromCategory as string | undefined;
-  const homeTo = fromCategory ? `/?cat=${fromCategory}` : "/";
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
@@ -101,7 +99,13 @@ export default function ChannelPage() {
       // YouTube URL인 경우 iframe으로 처리
       if (isYouTubeUrl(candidate)) {
         if (!mounted) return;
-        setResolvedUrl(candidate);
+        // YouTube iframe에 최고 품질 파라미터 추가
+        let youtubeUrl = candidate;
+        if (!youtubeUrl.includes('vq=')) {
+          const separator = youtubeUrl.includes('?') ? '&' : '?';
+          youtubeUrl += `${separator}vq=hd1080`;
+        }
+        setResolvedUrl(youtubeUrl);
         setIsYouTube(true);
         setLoading(false);
         // YouTube 재생 시작 시 플레이어 상태 업데이트
@@ -151,7 +155,7 @@ export default function ChannelPage() {
         if (Hls.isSupported()) {
           hls = new Hls({
             enableWorker: true,
-            backBufferLength: 90,
+            startLevel: -1, // 초기 레벨을 자동으로 설정한 후 최고 품질로 전환
           });
           hls.loadSource(finalUrl);
           hls.attachMedia(media as HTMLMediaElement);
@@ -177,8 +181,34 @@ export default function ChannelPage() {
             console.warn("failed to attach media events", e);
           }
 
-          hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            // Just play when ready
+          // Prefer levels that contain video (resolution > 0). If audio-only selected, keep default behavior.
+          hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data: any) {
+            try {
+              const levels = data?.levels || [];
+              // choose highest bandwidth level that has width/height > 0
+              let chosen = -1;
+              let maxBitrate = 0;
+              for (let i = 0; i < levels.length; i++) {
+                const lvl = levels[i];
+                if (lvl && (lvl.width || lvl.height)) {
+                  const bitrate = lvl.bitrate || 0;
+                  if (chosen === -1 || bitrate > maxBitrate) {
+                    chosen = i;
+                    maxBitrate = bitrate;
+                  }
+                }
+              }
+              if (chosen >= 0) {
+                console.info('Manifest parsed: forcing highest quality level', chosen, levels[chosen]);
+                // 최고 품질로 고정 (currentLevel 설정 시 자동으로 수동 모드로 전환됨)
+                hls.currentLevel = chosen;
+                hls.loadLevel = chosen;
+              } else {
+                console.info('Manifest parsed: no video levels detected, keeping default');
+              }
+            } catch (e) {
+              console.warn('Error in MANIFEST_PARSED handler', e);
+            }
           });
 
           hls.on(Hls.Events.ERROR, async function (event, data) {
@@ -263,9 +293,37 @@ export default function ChannelPage() {
 
                       // load repaired playlist
                       hls?.destroy();
-                      hls = new Hls({ enableWorker: true });
+                      hls = new Hls({
+                        enableWorker: true,
+                        startLevel: -1,
+                      });
                       hls.loadSource(repairedBlobUrl);
                       hls.attachMedia(media as HTMLMediaElement);
+
+                      // 복구된 플레이리스트에도 최고 품질 설정 적용
+                      hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data: any) {
+                        try {
+                          const levels = data?.levels || [];
+                          let chosen = -1;
+                          let maxBitrate = 0;
+                          for (let i = 0; i < levels.length; i++) {
+                            const lvl = levels[i];
+                            if (lvl && (lvl.width || lvl.height)) {
+                              const bitrate = lvl.bitrate || 0;
+                              if (chosen === -1 || bitrate > maxBitrate) {
+                                chosen = i;
+                                maxBitrate = bitrate;
+                              }
+                            }
+                          }
+                          if (chosen >= 0) {
+                            hls.currentLevel = chosen;
+                            hls.loadLevel = chosen;
+                          }
+                        } catch (e) {
+                          console.warn('Error in repaired MANIFEST_PARSED handler', e);
+                        }
+                      });
 
                       // reflect in UI
                       setResolvedUrl(repairedBlobUrl);
@@ -318,8 +376,7 @@ export default function ChannelPage() {
                   break;
               }
             } else {
-              // non-fatal 에러는 콘솔에만 기록하고 UI에는 표시하지 않음
-              console.warn(`플레이어 경고 (non-fatal): ${type} / ${details}`);
+              //setError(`플레이어 경고: ${type} / ${details}`);
             }
           });
         } else if (media.canPlayType("application/vnd.apple.mpegurl")) {
@@ -377,9 +434,7 @@ export default function ChannelPage() {
         <h1 className="mb-4 text-2xl font-bold">채널을 찾을 수 없어요</h1>
         <p className="text-muted-foreground">주소가 정확한지 확인해 주세요.</p>
         <div className="mt-6">
-          <Button asChild>
-            <Link to={homeTo}>홈으로 돌아가기</Link>
-          </Button>
+          <Button onClick={() => navigate(-1)}>홈으로 돌아가기</Button>
         </div>
       </main>
     );
@@ -412,8 +467,8 @@ export default function ChannelPage() {
           <div className="flex h-full w-full items-center justify-center text-white">
             <div className="text-center max-w-md">
               <p className="mb-2">{error}</p>
-              <Button asChild variant="outline">
-                <Link to={homeTo}>다른 채널 보기</Link>
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                다른 채널 보기
               </Button>
             </div>
           </div>
