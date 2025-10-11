@@ -99,7 +99,13 @@ export default function ChannelPage() {
       // YouTube URL인 경우 iframe으로 처리
       if (isYouTubeUrl(candidate)) {
         if (!mounted) return;
-        setResolvedUrl(candidate);
+        // YouTube iframe에 최고 품질 파라미터 추가
+        let youtubeUrl = candidate;
+        if (!youtubeUrl.includes('vq=')) {
+          const separator = youtubeUrl.includes('?') ? '&' : '?';
+          youtubeUrl += `${separator}vq=hd1080`;
+        }
+        setResolvedUrl(youtubeUrl);
         setIsYouTube(true);
         setLoading(false);
         // YouTube 재생 시작 시 플레이어 상태 업데이트
@@ -120,7 +126,10 @@ export default function ChannelPage() {
 
       try {
         if (Hls.isSupported()) {
-          hls = new Hls({ enableWorker: true });
+          hls = new Hls({
+            enableWorker: true,
+            startLevel: -1, // 초기 레벨을 자동으로 설정한 후 최고 품질로 전환
+          });
           hls.loadSource(finalUrl);
           hls.attachMedia(media as HTMLMediaElement);
 
@@ -151,20 +160,22 @@ export default function ChannelPage() {
               const levels = data?.levels || [];
               // choose highest bandwidth level that has width/height > 0
               let chosen = -1;
+              let maxBitrate = 0;
               for (let i = 0; i < levels.length; i++) {
                 const lvl = levels[i];
                 if (lvl && (lvl.width || lvl.height)) {
-                  if (chosen === -1 || (lvl.bitrate || lvl.bitrate) > (levels[chosen].bitrate || levels[chosen].bitrate)) {
+                  const bitrate = lvl.bitrate || 0;
+                  if (chosen === -1 || bitrate > maxBitrate) {
                     chosen = i;
+                    maxBitrate = bitrate;
                   }
                 }
               }
               if (chosen >= 0) {
-                console.info('Manifest parsed: forcing level', chosen, levels[chosen]);
-                hls.startLevel = chosen;
-                hls.nextLevel = chosen;
-                // restart load to apply
-                try { hls.startLoad(); } catch (e) { }
+                console.info('Manifest parsed: forcing highest quality level', chosen, levels[chosen]);
+                // 최고 품질로 고정 (currentLevel 설정 시 자동으로 수동 모드로 전환됨)
+                hls.currentLevel = chosen;
+                hls.loadLevel = chosen;
               } else {
                 console.info('Manifest parsed: no video levels detected, keeping default');
               }
@@ -255,9 +266,37 @@ export default function ChannelPage() {
 
                       // load repaired playlist
                       hls?.destroy();
-                      hls = new Hls({ enableWorker: true });
+                      hls = new Hls({
+                        enableWorker: true,
+                        startLevel: -1,
+                      });
                       hls.loadSource(repairedBlobUrl);
                       hls.attachMedia(media as HTMLMediaElement);
+
+                      // 복구된 플레이리스트에도 최고 품질 설정 적용
+                      hls.on(Hls.Events.MANIFEST_PARSED, function (_event, data: any) {
+                        try {
+                          const levels = data?.levels || [];
+                          let chosen = -1;
+                          let maxBitrate = 0;
+                          for (let i = 0; i < levels.length; i++) {
+                            const lvl = levels[i];
+                            if (lvl && (lvl.width || lvl.height)) {
+                              const bitrate = lvl.bitrate || 0;
+                              if (chosen === -1 || bitrate > maxBitrate) {
+                                chosen = i;
+                                maxBitrate = bitrate;
+                              }
+                            }
+                          }
+                          if (chosen >= 0) {
+                            hls.currentLevel = chosen;
+                            hls.loadLevel = chosen;
+                          }
+                        } catch (e) {
+                          console.warn('Error in repaired MANIFEST_PARSED handler', e);
+                        }
+                      });
 
                       // reflect in UI
                       setResolvedUrl(repairedBlobUrl);
