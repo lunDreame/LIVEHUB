@@ -125,18 +125,18 @@ export default function ChannelPage() {
       if (candidate.startsWith('udp://')) {
         try {
           console.log(`UDP 스트림 감지: ${candidate}, 서버에서 HLS로 변환 중...`);
-          const proxyResponse = await fetch(`/api/proxy?udp=${encodeURIComponent(candidate)}&slug=${encodeURIComponent(channel.slug)}`);
+          const hlsResponse = await fetch(`/api/mcast-to-hls?udp=${encodeURIComponent(candidate)}&slug=${encodeURIComponent(channel.slug)}`);
 
-          if (!proxyResponse.ok) {
-            throw new Error(`HLS 변환 실패: ${proxyResponse.statusText}`);
+          if (!hlsResponse.ok) {
+            throw new Error(`HLS 변환 실패: ${hlsResponse.statusText}`);
           }
 
-          const proxyData = await proxyResponse.json();
-          if (!proxyData.hlsUrl) {
+          const hlsData = await hlsResponse.json();
+          if (!hlsData.hlsUrl) {
             throw new Error('서버에서 HLS URL을 반환하지 않았습니다.');
           }
 
-          finalUrl = proxyData.hlsUrl;
+          finalUrl = hlsData.hlsUrl;
           console.log(`HLS URL 받음: ${finalUrl}`);
         } catch (err: any) {
           console.error('UDP → HLS 변환 오류:', err);

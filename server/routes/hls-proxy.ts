@@ -107,7 +107,7 @@ function startHLSStream(udpUrl: string, slug: string): string {
     return outputDir;
 }
 
-export const handleMulticastProxy: RequestHandler = (req, res) => {
+export const handleMcastToHlsProxy: RequestHandler = (req, res) => {
     const { udp, slug } = req.query;
 
     if (!udp || typeof udp !== 'string') {
