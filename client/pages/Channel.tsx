@@ -37,7 +37,6 @@ export default function ChannelPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [showUrl, setShowUrl] = useState(false);
   const [isYouTube, setIsYouTube] = useState(false);
   const player = usePlayer();
 
@@ -472,14 +471,6 @@ export default function ChannelPage() {
         )}
       </div>
 
-      <div className="mt-6 text-sm text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <button className="text-xs underline" onClick={() => setShowUrl((s) => !s)}>{showUrl ? "요청 URL 숨기기" : "요청 URL 표시"}</button>
-        </div>
-        {showUrl && (
-          <p className="mt-2 break-all">{resolvedUrl ?? channel.streamUrl ?? resolveStreamFor(channel.slug) ?? "없음"}</p>
-        )}
-      </div>
     </main>
   );
 }
