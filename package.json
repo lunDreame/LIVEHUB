@@ -1,25 +1,33 @@
 {
-  "name": "fusion-starter",
+  "name": "livehub",
   "private": true,
   "type": "module",
   "pkg": {
     "assets": [
       "dist/spa/*"
     ],
-    "scripts": []
+    "scripts": [
+      "dist/server/**/*.js"
+    ]
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "start": "serve dist/spa -s -n -l 3000",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build",
+    "build:server": "vite build --config vite.config.server.ts",
+    "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
     "typecheck": "tsc"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "hls.js": "^1.4.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",

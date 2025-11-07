@@ -5,6 +5,8 @@ export type CategoryId =
   | "education"
   | "entertainment"
   | "economy"
+  | "religious"
+  | "culture"
   | "radio";
 
 export interface Channel {
@@ -23,6 +25,8 @@ export const categories: { id: CategoryId; label: string }[] = [
   { id: "education", label: "교육 / 어린이 (EBS)" },
   { id: "entertainment", label: "음악 / 엔터테인먼트" },
   { id: "economy", label: "국내 경제/뉴스 전문" },
+  { id: "religious", label: "종교 방송" },
+  { id: "culture", label: "문화 / 공연" },
   { id: "radio", label: "라디오" },
 ];
 
@@ -69,6 +73,7 @@ export const channels: Channel[] = [
   // 스포츠 채널
   { name: "SBS Sports", slug: s("SBS Sports"), category: "sports" },
   { name: "SBS GOLF", slug: s("SBS GOLF"), category: "sports" },
+  { name: "SBS GOLF2", slug: s("SBS GOLF2"), category: "sports" },
   { name: "JTBC GOLF", slug: s("JTBC GOLF"), category: "sports" },
   { name: "JTBC 골프&스포츠", slug: s("JTBC 골프&스포츠"), category: "sports" },
 
@@ -99,6 +104,7 @@ export const channels: Channel[] = [
   { name: "EBS 플러스2", slug: s("EBS 플러스2"), category: "education" },
   { name: "EBS English", slug: s("EBS English"), category: "education" },
   { name: "YTN 사이언스", slug: s("YTN 사이언스"), category: "education" },
+  { name: "역사저널 그날", slug: s("역사저널 그날"), category: "education" },
 
   // 음악 / 엔터테인먼트
   { name: "올 더 케이팝", slug: s("올 더 케이팝"), category: "entertainment" },
@@ -117,6 +123,16 @@ export const channels: Channel[] = [
   { name: "연합뉴스경제TV", slug: s("연합뉴스경제TV"), category: "economy" },
   { name: "KTV", slug: s("KTV"), category: "economy" },
   { name: "국회방송", slug: s("국회방송"), category: "economy" },
+
+  // 종교 방송
+  { name: "CTS기독교TV", slug: s("CTS기독교TV"), category: "religious" },
+  { name: "가톨릭 평화방송", slug: s("가톨릭 평화방송"), category: "religious" },
+  { name: "BBS불교방송", slug: s("BBS불교방송"), category: "religious" },
+  { name: "BTN 불교TV", slug: s("BTN 불교TV"), category: "religious" },
+  { name: "원음방송", slug: s("원음방송"), category: "religious" },
+
+  // 문화 / 공연
+  { name: "국악방송", slug: s("국악방송"), category: "culture" },
 
   // 라디오 채널 (방송사별 그룹)
   // KBS 라디오

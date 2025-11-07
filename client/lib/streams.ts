@@ -8,41 +8,42 @@ const s = (text: string) =>
 
 export const streamMap: Record<string, string> = {
   // TV 채널 - 지상파/종편
-  [s("KBS1")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/11",
-  [s("KBS2")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/12",
-  [s("KBS NEWS 24")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/81",
-  [s("KBS DRAMA")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N91",
-  [s("KBS JOY")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N92",
-  [s("KBS STORY")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N94",
-  [s("KBS LIFE")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N93",
-  [s("KBS KIDS")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/N96",
-  [s("KBS WORLD TV")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/14",
-  [s("KBS LIVE Dokdo")]: "https://cfpwwwapi.kbs.co.kr/api/v1/landing/live/channel_code/cctv01",
+  [s("KBS1")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=11",
+  [s("KBS2")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=12",
+  [s("KBS NEWS 24")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=81",
+  [s("KBS DRAMA")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=N91",
+  [s("KBS JOY")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=N92",
+  [s("KBS STORY")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=N94",
+  [s("KBS LIFE")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=N93",
+  [s("KBS KIDS")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=N96",
+  [s("KBS WORLD TV")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=14",
+  [s("KBS LIVE Dokdo")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=cctv01",
 
-  [s("MBC")]: "https://live.imnews.imbc.com/imnews/_definst_/live2.stream/playlist.m3u8?e=1760155707&h=a0126f8c676d6fcadf72831db7073290",
+  [s("MBC")]: "https://xzx.kr/dJE",
   [s("MBC뉴스")]: "https://www.youtube.com/embed/q9bM12ucTIY?autoplay=1",
-  [s("대구MBC")]: "https://5ee1ec6f32118.streamlock.net/live/livetv/playlist.m3u8",
-  [s("대전MBC")]: "https://ns1.tjmbc.co.kr/live/myStream.sdp/playlist.m3u8",
-  [s("CJB")]: "http://1.222.207.80:1935//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////live/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////cjbtv///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////chunklist_w1909627462.m3u8",
+  [s("대구MBC")]: "https://xzx.kr/dN4",
+  [s("대전MBC")]: "https://xzx.kr/bNq",
+  [s("CJB")]: "https://xzx.kr/d7Y",
 
-  [s("SBS")]: "http://tvlive.sbs.co.kr/sbsch6/sbsch62.stream/playlist.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NjAxNTU4ODAsInBhdGgiOiIvc2JzY2g2Mi5zdHJlYW0iLCJkdXJhdGlvbiI6LTEsInVubyI6ImQ4OWVjYWZiLWVjYTMtNDRjZS1iZGJjLWQxOWJiYWFmN2VhZSIsImlhdCI6MTc2MDE0ODY4MH0.iK1VL2mC3GYL5Mw5YH85lOqjy35G7zoK-3oSSsvsSZI",
+  [s("SBS")]: "https://xzx.kr/dH2",
   [s("SBS뉴스")]: "https://www.youtube.com/embed/RevYuGM_Bx0?autoplay=1",
 
-  [s("JTBC")]: "https://jtbclive-cdn.jtbc.co.kr/mobileweb/newmoweb.stream/playlist.m3u8?Policy=eyJTdGF0ZW1lbnQiOiBbeyJSZXNvdXJjZSI6Imh0dHAqOi8vanRiY2xpdmUtY2RuLmp0YmMuY28ua3IvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc2MDE3NjY5MX0sIklwQWRkcmVzcyI6eyJBV1M6U291cmNlSXAiOiIwLjAuMC4wLzAifX19XX0_&Signature=AFrVkNly44ms6vf04M2oXGldC2BZf9tEGmsCBSwa4wpmZeojAZoOdjxMKoTI97h34smtDteY3P3xVWDeQPZ1YoU1Bvmv~w69eUYB~SrMON8CBPqYrPTiimoN117ejmV~C~QCiqjuCHjq6cTwM98m1BYhObVaoJP1fwC~eWmBdJE_&Key-Pair-Id=pub_jtbclive-cdn.jtbc.co.kr",
-  [s("채널A")]: "https://channelaid3.ichannela.com/atv3/playlist.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXRoIjoiL2F0djMiLCJleHAiOjE3NjAxODM5NzJ9.6YU6_qHM9rcPrCXIfdN7HCD_EYoeU74O9nl1u4Ozgss",
-  [s("TV조선")]: "http://onair.cdn.tvchosun.com///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////origin1////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////_definst_///////////tvchosun_s1////////////////////////////////////playlist.m3u8",
-  [s("MBN")]: "https://hls-live.mbn.co.kr/mbn-on-air/600k/playlist.m3u8?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cCo6Ly9obHMtbGl2ZS5tYm4uY28ua3IvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc2MDIzNTM3M30sIklwQWRkcmVzcyI6eyJBV1M6U291cmNlSXAiOiIwLjAuMC4wLzAifX19XX0_&Signature=0nbc0UAXFqoZj7NYHz290EWvcry5LzxKPz~IPpf7n9~k7GlYCa5058041Bs8jbzLXp~19Eh8rLRGpjIxkD5W6DseNLk0KShADN8ly2fLHTU3KhLWpcbF5UTUeK9JLosWcVsZfOw7VxPTvg8RHGSpTpDkBB6TeAAvH6GrQVJLvCg_&Key-Pair-Id=pub_hls-live.mbn.co.kr",
+  [s("JTBC")]: "https://xzx.kr/d8a",
+  [s("채널A")]: "https://xzx.kr/bMV",
+  [s("TV조선")]: "https://xzx.kr/dwk",
+  [s("MBN")]: "https://mbnlive.mbn.co.kr/MBN/mbn_live.m3u8",
 
   [s("YTN")]: "https://www.youtube.com/embed/FJfwehhzIhw?autoplay=1",
   [s("연합뉴스TV")]: "https://www.youtube.com/embed/6QZ_qc75ihU?autoplay=1",
   [s("TBS")]: "https://cdntv.tbs.seoul.kr/tbs/_definst_/tbs_tv_web_720.smil/playlist.m3u8",
-  [s("OBS")]: "https://vod.obs.co.kr:444/live/obsstream1/tv.stream/chunklist_w846805792.m3u8",
+  [s("OBS")]: "https://xzx.kr/jdC",
 
   // 스포츠 채널
-  [s("SBS Sports")]: "http://tvlive.sbs.co.kr/sbsespn/sbsespn2.stream/playlist.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NjAxNTYzNjAsInBhdGgiOiIvc2JzZXNwbjIuc3RyZWFtIiwiZHVyYXRpb24iOi0xLCJ1bm8iOiJhMTU2YzlkNy1iODdiLTQwMTktYjlmOS05ZGJkZTI4OWFiNjgiLCJpYXQiOjE3NjAxNDkxNjB9._J8lFzxFNLHe1qWTch3AYDJh2Q2z0UvF_-87onuaWr4",
-  [s("SBS GOLF")]: "http://tvlive.sbs.co.kr/sbsgolf/sbsgolf2.stream/playlist.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NjAxNTYzMTYsInBhdGgiOiIvc2JzZ29sZjIuc3RyZWFtIiwiZHVyYXRpb24iOi0xLCJ1bm8iOiI3YWFhYzFkOS0wMmQwLTQyY2YtOTgxOS1kMjBiZTQyOTBlMzMiLCJpYXQiOjE3NjAxNDkxMTZ9.2vmicMKivRrhEx7ooQrsBPeH6_S5WVeSpEct-FEK-og",
+  [s("SBS Sports")]: "https://xzx.kr/jd7",
+  [s("SBS GOLF")]: "https://xzx.kr/jd8",
+  [s("SBS GOLF2")]: "https://xzx.kr/jd9",
   [s("JTBC GOLF")]: "https://www.youtube.com/embed/y0Fa_lEljWQ?autoplay=1",
-  [s("JTBC 골프&스포츠")]: "http://jtbc3sports.flive.skcdn.com/jtbc3sports1/_definst_/3F6982E754ED37ABCED0ABF26652D978089099D1DAA81085255961DB37B6B2C0/playlist.m3u8",
+  [s("JTBC 골프&스포츠")]: "https://xzx.kr/jdA",
 
   // 홈쇼핑
   [s("GS샵")]: "http://gstv-gsshop.gsshop.com/gsshop_hd/_definst_/gsshop_hd.stream/playlist.m3u8",
@@ -60,7 +61,7 @@ export const streamMap: Record<string, string> = {
   [s("쇼핑엔티")]: "https://xzx.kr/dt9",
   [s("공영쇼핑")]: "http://etv.publichs.com/live5.stream/playlist.m3u8",
   [s("SK스토아")]: "https://xzx.kr/dtA",
-  [s("KT알파쇼핑")]: "https://livetv.kshop.co.kr/klive/_definst_/smil:klive.smil/playlist.m3u8",
+  [s("KT알파 쇼핑")]: "https://livetv.kshop.co.kr/klive/_definst_/smil:klive.smil/playlist.m3u8",
   [s("홈앤쇼핑")]: "https://s30.qtcdn.co.kr/media/liveM3U8/idx/484074138/enc/1790577012/playlist.m3u8",
 
   // 교육/어린이
@@ -71,6 +72,7 @@ export const streamMap: Record<string, string> = {
   [s("EBS 플러스2")]: "https://ebsonair.ebs.co.kr/plus2familypc/familypc1m/playlist.m3u8",
   [s("EBS English")]: "https://ebsonair.ebs.co.kr/plus3familypc/familypc1m/playlist.m3u8",
   [s("YTN 사이언스")]: "https://www.youtube.com/embed/xfFa_kcPnCY?autoplay=1",
+  [s("역사저널 그날")]: "https://onair.kbs.co.kr/index.html?sname=onair&stype=live&ch_code=nvod8",
 
   // 엔터테인먼트
   [s("올 더 케이팝")]: "https://www.youtube.com/embed/IggeC2cYvYU?autoplay=1",
@@ -78,17 +80,27 @@ export const streamMap: Record<string, string> = {
   [s("THE 트롯 보라고")]: "https://www.youtube.com/embed/CMnAakQCEdM?autoplay=1",
   [s("런닝맨")]: "https://www.youtube.com/embed/lDcWeklf6DI?autoplay=1",
   [s("대탈출")]: "https://www.youtube.com/embed/yNc5W-Bjpcw?autoplay=1",
-  [s("최강야구")]: "https://tistory1.daumcdn.net/tistory/2864460/skin/images/CATV_301_E2487CD9.m3u8",
+  [s("최강야구")]: "https://xzx.kr/cxF",
 
   // 경제/뉴스
   [s("한국경제TV")]: "https://www.youtube.com/embed/NJUjU9ALj4A?autoplay=1",
   [s("이데일리TV")]: "https://www.youtube.com/embed/5cFoz90FUMk?autoplay=1",
   [s("매일경제TV")]: "https://www.youtube.com/embed/s9xL1DpBsfQ?autoplay=1",
   [s("머니투데이방송")]: "https://www.youtube.com/embed/lb1oB2feqkQ?autoplay=1",
-  [s("서울경제TV")]: "https://www.youtube.com/embed/ACLfq550lOI?autoplay=1",
+  [s("서울경제TV")]: "https://www.youtube.com/embed/kb-O-IYFSr8?autoplay=1",
   [s("연합뉴스경제TV")]: "https://www.youtube.com/embed/yhpbioCP6nA?autoplay=1",
   [s("KTV")]: "https://hlive.ktv.go.kr/live/klive_h.stream/playlist.m3u8",
   [s("국회방송")]: "https://m.webcast.go.kr/live/_definst_/smil:natv_720p.smil/playlist.m3u8",
+
+  // 종교 방송
+  [s("CTS기독교TV")]: "https://xzx.kr/gam",
+  [s("가톨릭 평화방송")]: "https://xzx.kr/jdD",
+  [s("BBS불교방송")]: "https://xzx.kr/ds8",
+  [s("BTN 불교TV")]: "https://xzx.kr/dsA",
+  [s("원음방송")]: "https://xzx.kr/jdE",
+
+  // 문화/공연
+  [s("국악방송")]: "https://mgugaklive.nowcdn.co.kr/gugakvideo/gugakvideo.stream/playlist.m3u8",
 
   // Copyright from BSofDeath
   // https://radio.bsod.kr/
@@ -273,7 +285,7 @@ export const streamMap: Record<string, string> = {
   [s("TBS FM")]: "https://radio.bsod.kr/stream/?stn=tbs&ch=fm",
   [s("TBS eFM")]: "https://radio.bsod.kr/stream/?stn=tbs&ch=efm",
   [s("국방FM")]: "https://radio.bsod.kr/stream/?stn=kookbang",
-  [s("국악방송")]: "https://radio.bsod.kr/stream/?stn=kugak",
+  [s("국악방송 라디오")]: "https://radio.bsod.kr/stream/?stn=kugak",
 };
 
 export function resolveStreamFor(slug: string) {
