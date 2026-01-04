@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ChannelCard from "@/components/ChannelCard";
-import { Search } from "lucide-react";
+import { Search, Lock } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function Index() {
@@ -13,6 +13,17 @@ export default function Index() {
   const location = useLocation();
   const initial = (searchParams.get("cat") as any) || categories[0].id;
 
+  // 핀 번호 인증 상태 확인
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return localStorage.getItem("pinAuthenticated") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(initial);
 
@@ -50,15 +61,95 @@ export default function Index() {
     });
   }, [query, active]);
 
+  const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+    setPin(value);
+    setPinError(false);
+
+    // 4자리 입력 시 핀 번호 검증
+    const correctPin = import.meta.env.VITE_PIN_CODE || "";
+    if (value.length === 4) {
+      if (value === correctPin) {
+        try {
+          localStorage.setItem("pinAuthenticated", "true");
+          setIsAuthenticated(true);
+        } catch {
+          // localStorage 오류 처리
+        }
+      } else {
+        // 잘못된 핀 번호인 경우 에러 표시 후 입력 초기화
+        setPinError(true);
+        setTimeout(() => {
+          setPin("");
+          setPinError(false);
+        }, 1000);
+      }
+    }
+  };
+
+  // 핀 번호 입력 화면
+  if (!isAuthenticated) {
+    return (
+      <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="container flex flex-col items-center gap-6 px-4 py-20">
+          <div className="relative overflow-hidden">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-primary/15 via-fuchsia-500/10 to-emerald-400/10" />
+            <div className="flex flex-col items-center gap-6 rounded-lg border bg-background/60 p-8 backdrop-blur sm:p-12">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-fuchsia-500 text-white shadow-lg">
+                <Lock className="h-8 w-8" />
+              </div>
+              <div className="text-center">
+                <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                  핀 번호를 입력하세요
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  4자리 숫자를 입력해주세요
+                </p>
+              </div>
+              <div className="w-full max-w-xs">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={pin}
+                  onChange={handlePinChange}
+                  placeholder="0000"
+                  className={`text-center text-2xl font-mono tracking-widest ${pinError ? "border-red-500 focus-visible:ring-red-500" : ""
+                    }`}
+                  maxLength={4}
+                  autoFocus
+                />
+                {pinError && (
+                  <p className="mt-2 text-center text-sm text-red-500">
+                    잘못된 핀 번호입니다
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className={`h-3 w-3 rounded-full transition-colors ${pinError
+                      ? "bg-red-500"
+                      : i < pin.length
+                        ? "bg-primary"
+                        : "bg-muted"
+                      }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main>
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-primary/15 via-fuchsia-500/10 to-emerald-400/10" />
         <div className="container flex flex-col items-center gap-6 py-14 text-center md:py-20">
-          <span className="inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
-            <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />
-            지금 시청 가능한 실시간 채널 모음
-          </span>
           <h1 className="max-w-3xl text-balance text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
             실시간 방송을 한 곳에서. 더 빠르게, 더 간편하게
           </h1>

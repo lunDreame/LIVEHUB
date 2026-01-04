@@ -22,7 +22,7 @@ export default function SiteHeader() {
     setDark(isDark);
     try {
       localStorage.setItem("theme", isDark ? "dark" : "light");
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function SiteHeader() {
         document.documentElement.classList.add("dark");
         setDark(true);
       }
-    } catch {}
+    } catch { }
   }, []);
 
   return (
@@ -41,7 +41,6 @@ export default function SiteHeader() {
         <Link to="/" className="group inline-flex items-center gap-2">
           <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-fuchsia-500 text-white shadow-sm">
             <Tv className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-red-500" />
           </span>
           <div className="flex items-center gap-3">
             <span className="text-lg font-extrabold tracking-tight">라이브허브</span>
